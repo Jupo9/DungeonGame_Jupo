@@ -2,26 +2,32 @@
 
 
 #include "Lock.h"
+#include "CollectableItem.h"
+#include "Components/SceneComponent.h"
+#include "Engine/World.h"
+#include "TriggerComponent.h"
 
 // Sets default values
 ALock::ALock()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.bCanEverTick = true;
 
-	rootComp = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
-	SetRootComponent(rootComp);
+    rootComp = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
+    SetRootComponent(rootComp);
 
-	triggerComp = CreateDefaultSubobject<UTriggerComponent>(TEXT("TriggerComponent"));
-	triggerComp->SetupAttachment(rootComp);
+    triggerComp = CreateDefaultSubobject<UTriggerComponent>(TEXT("TriggerComponent"));
+    triggerComp->SetupAttachment(rootComp);
 
-	keyItemMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("KeyItemMesh"));
-	keyItemMesh->SetupAttachment(rootComp);
+    PlacementPoint = CreateDefaultSubobject<USceneComponent>(TEXT("PlacementPoint"));
+    PlacementPoint->SetupAttachment(rootComp);
 
-	Tags.Add("Lock");
+    Tags.Add("Lock");
+
+    isKeyPlaced = false;
+    SpawnedActor = nullptr;
+    PlacedItemKey.Empty();
 }
 
-// Called when the game starts or when spawned
 void ALock::BeginPlay()
 {
 	Super::BeginPlay();
@@ -29,7 +35,6 @@ void ALock::BeginPlay()
 	SetIsKeyPlaced(false);
 }
 
-// Called every frame
 void ALock::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -38,10 +43,12 @@ void ALock::Tick(float DeltaTime)
 
 void ALock::SetIsKeyPlaced(bool newIsKeyPlaced)
 {
-	isKeyPlaced = newIsKeyPlaced;
+    isKeyPlaced = newIsKeyPlaced;
 
-	triggerComp->Trigger(newIsKeyPlaced);
-	keyItemMesh->SetVisibility(newIsKeyPlaced);
+    if (triggerComp)
+    {
+        triggerComp->Trigger(newIsKeyPlaced);
+    }
 }
 
 bool ALock::GetIsKeyPlaced()
@@ -49,4 +56,25 @@ bool ALock::GetIsKeyPlaced()
 	return isKeyPlaced;
 }
 
+void ALock::PlaceVariant(const FString& ItemKey, AActor* Spawned)
+{
+    PlacedItemKey = ItemKey;
+    SpawnedActor = Spawned;
+    SetIsKeyPlaced(true);
+}
 
+FString ALock::RemovePlacedVariant()
+{
+    FString KeyToReturn = PlacedItemKey;
+
+    if (SpawnedActor)
+    {
+        SpawnedActor->Destroy();
+        SpawnedActor = nullptr;
+    }
+
+    PlacedItemKey.Empty();
+    SetIsKeyPlaced(false);
+
+    return KeyToReturn;
+}

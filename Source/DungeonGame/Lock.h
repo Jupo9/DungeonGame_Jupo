@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "TriggerComponent.h"
+#include "CollectableItem.h"
 #include "Components/StaticMeshComponent.h"
 #include "Lock.generated.h"
 
@@ -14,33 +15,44 @@ class DUNGEONGAME_API ALock : public AActor
 	GENERATED_BODY()
 	
 public:	
-	// Sets default values for this actor's properties
 	ALock();
 
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 public:	
-	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+	void SetIsKeyPlaced(bool newIsKeyPlaced);
+	bool GetIsKeyPlaced();
+
+	UPROPERTY(EditAnywhere, Category = "Variants")
+	USceneComponent* PlacementPoint;
+
+	UPROPERTY(EditAnywhere, Category = "Variants")
+	TMap<FString, TSubclassOf<ACollectableItem>> VariantMap;
+
+	UPROPERTY()
+	AActor* SpawnedActor;
 
 	UPROPERTY(VisibleAnywhere)
 	USceneComponent* rootComp;
 
 	UPROPERTY(VisibleAnywhere)
-	UTriggerComponent* triggerComp;
+	class UTriggerComponent* triggerComp;
 
-	UPROPERTY(VisibleAnywhere)
-	UStaticMeshComponent* keyItemMesh;
+	UFUNCTION()
+	void PlaceVariant(const FString& ItemKey, AActor* Spawned);
 
-	UPROPERTY(EditAnywhere)
-	FString keyItemName;
+	UFUNCTION()
+	FString RemovePlacedVariant();
 
-	void SetIsKeyPlaced(bool newIsKeyPlaced);
-	bool GetIsKeyPlaced();
+	UPROPERTY()
+	FString PlacedItemKey;
 
 private:
-	UPROPERTY(VisibleAnywhere)
-	bool isKeyPlaced = false;
+
+	UPROPERTY()
+	bool isKeyPlaced;
+
 };

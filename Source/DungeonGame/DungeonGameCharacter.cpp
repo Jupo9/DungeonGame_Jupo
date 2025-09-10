@@ -109,28 +109,48 @@ void ADungeonGameCharacter::Interact()
 		}
 		else if (hitActor->ActorHasTag("Lock"))
 		{
-			//hitActor is a lock
-
 			ALock* lockActor = Cast<ALock>(hitActor);
 			if (lockActor)
 			{
 				if (!lockActor->GetIsKeyPlaced())
 				{
-					//lock is empty
-					int32 itemRemoved = itemList.RemoveSingle(lockActor->keyItemName);
-					if (itemRemoved)
+					// Suche im Inventar nach einem Item-Key, der in VariantMap liegt
+					for (int32 i = 0; i < itemList.Num(); ++i)
 					{
-						lockActor->SetIsKeyPlaced(true);
-					}
-					else
-					{
-						UE_LOG(LogTemp, Display, TEXT("There is no fitting item in inventory"));
+						const FString& invItem = itemList[i];
+						if (lockActor->VariantMap.Contains(invItem))
+						{
+							TSubclassOf<ACollectableItem> actorClass = *lockActor->VariantMap.Find(invItem);
+							if (actorClass)
+							{
+								FActorSpawnParameters SpawnParams;
+								SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+								FVector SpawnLoc = lockActor->PlacementPoint->GetComponentLocation();
+								FRotator SpawnRot = lockActor->PlacementPoint->GetComponentRotation();
+
+								AActor* Spawned = GetWorld()->SpawnActor<AActor>(actorClass, SpawnLoc, SpawnRot, SpawnParams);
+								if (Spawned)
+								{
+									// lock merkt sich jetzt den originalen Item-Key (invItem)
+									lockActor->PlaceVariant(invItem, Spawned);
+
+									// entferne das Item aus dem Inventar
+									itemList.RemoveAt(i);
+								}
+							}
+							break; // wir haben etwas verwendet -> raus aus der Schleife
+						}
 					}
 				}
 				else
 				{
-					itemList.Add(lockActor->keyItemName);
-					lockActor->SetIsKeyPlaced(false);
+					// Entferne die platzierte Variante und gib den Key zurück ins Inventar
+					FString returnedKey = lockActor->RemovePlacedVariant();
+					if (!returnedKey.IsEmpty())
+					{
+						itemList.Add(returnedKey);
+					}
 				}
 			}
 		}

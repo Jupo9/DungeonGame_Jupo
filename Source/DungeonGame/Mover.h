@@ -30,6 +30,9 @@ public:
 	UPROPERTY(EditAnywhere)
 	float moveTime = 4.f;
 
+	UPROPERTY(EditAnywhere)
+	bool shouldDestroy = false;
+
 	UPROPERTY(VisibleAnywhere)
 	bool reachedTarget = false;
 

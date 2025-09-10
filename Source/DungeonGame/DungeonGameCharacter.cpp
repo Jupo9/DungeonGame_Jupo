@@ -79,9 +79,15 @@ void ADungeonGameCharacter::Interact()
 {
 	FVector start = FirstPersonCameraComponent->GetComponentLocation();
 	FVector end = start + (FirstPersonCameraComponent->GetForwardVector() * maxInteractionDistance);
+	DrawDebugLine(GetWorld(), start, end, FColor::Red, false, 5.0f);
 
 	FHitResult hitResult;
 	FCollisionShape interactionSphere = FCollisionShape::MakeSphere(interactionSphereRadius);
+
+	DrawDebugSphere(GetWorld(), end, interactionSphereRadius, 20, FColor::Blue, false, 5.0f);
+	/* Draw a sphere from players view 
+	DrawDebugSphere(GetWorld(), start, interactionSphereRadius, 20, FColor::Green, false, 5.0f); 
+	*/
 
 	bool hasHit = GetWorld()->SweepSingleByChannel(hitResult, start, end, FQuat::Identity, ECC_GameTraceChannel2, interactionSphere);
 

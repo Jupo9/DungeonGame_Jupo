@@ -12,22 +12,21 @@ void UTriggerComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (moverActor) //(moverActor != nullptr)
+	for (AActor* actor : moverActors)
 	{
-		mover = moverActor->FindComponentByClass<UMover>();
-
-		if (mover)
+		if (actor)
 		{
-			UE_LOG(LogTemp, Display, TEXT("mover is fine"));
+			UMover* moverComp = actor->FindComponentByClass<UMover>();
+			if (moverComp)
+			{
+				movers.Add(moverComp);
+				UE_LOG(LogTemp, Display, TEXT("Added mover from %s"), *actor->GetName());
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("%s has no UMover component"), *actor->GetName());
+			}
 		}
-		else
-		{
-			UE_LOG(LogTemp, Display, TEXT("mover is null pointer"));
-		}
-	}
-	else
-	{
-		UE_LOG(LogTemp, Display, TEXT("moverActor is null pointer"));
 	}
 
 	if (isPressurcePlate)
@@ -47,14 +46,20 @@ void UTriggerComponent::Trigger(bool newTriggerValue)
 {
 	isTriggered = newTriggerValue;
 
-	if (mover)
+	if (movers.Num() > 0)
 	{
-		UE_LOG(LogTemp, Display, TEXT("mover get triggert PAIN"));
-		mover->SetShouldMove(isTriggered);
+		for (UMover* mover : movers)
+		{
+			if (mover)
+			{
+				mover->SetShouldMove(isTriggered);
+			}
+		}
+		UE_LOG(LogTemp, Display, TEXT("Triggered %d movers"), movers.Num());
 	}
 	else
 	{
-		UE_LOG(LogTemp, Display, TEXT(" %s doesn't have a mover to trigger"), *GetOwner()->GetActorNameOrLabel());
+		UE_LOG(LogTemp, Warning, TEXT("%s has no movers to trigger"), *GetOwner()->GetActorNameOrLabel());
 	}
 }
 

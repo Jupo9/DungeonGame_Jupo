@@ -61,6 +61,11 @@ void UMover::SetShouldMove(bool newShouldMove)
 	if (shouldMove)
 	{
 		targetLocation = startLocation + moveOffset;
+
+		if (shouldDestroy)
+		{
+			GetOwner()->Destroy();
+		}
 	}
 	else
 	{

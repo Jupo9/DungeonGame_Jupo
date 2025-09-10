@@ -79,86 +79,76 @@ void ADungeonGameCharacter::Interact()
 {
 	FVector start = FirstPersonCameraComponent->GetComponentLocation();
 	FVector end = start + (FirstPersonCameraComponent->GetForwardVector() * maxInteractionDistance);
-	DrawDebugLine(GetWorld(), start, end, FColor::Red, false, 5.0f);
-
-	FCollisionShape interactionSphere = FCollisionShape::MakeSphere(interactionSphereRadius);
-	DrawDebugSphere(GetWorld(), end, interactionSphereRadius, 20, FColor::Blue, false, 5.0f);
-	/*Draw a sphere from players view
-		DrawDebugSphere(GetWorld(), start, interactionSphereRadius, 20, FColor::Green, false, 5.0f);
-	*/
 
 	FHitResult hitResult;
-	//Trace channel name is found in Project Folder - Config - DefaultEngine.ini - with strg + F find "Interact" and its trace channel
+	FCollisionShape interactionSphere = FCollisionShape::MakeSphere(interactionSphereRadius);
+
 	bool hasHit = GetWorld()->SweepSingleByChannel(hitResult, start, end, FQuat::Identity, ECC_GameTraceChannel2, interactionSphere);
 
-	if (hasHit)
-	{
-		AActor* hitActor = hitResult.GetActor();
-
-		if (hitActor->ActorHasTag("CollectableItem"))
-		{
-			//hitActor is a collectable item
-
-			ACollectableItem* collectableItem =  Cast<ACollectableItem>(hitActor);
-			if (collectableItem)
-			{
-				itemList.Add(collectableItem->itemName);
-
-				collectableItem->Destroy();
-			}
-		}
-		else if (hitActor->ActorHasTag("Lock"))
-		{
-			ALock* lockActor = Cast<ALock>(hitActor);
-			if (lockActor)
-			{
-				if (!lockActor->GetIsKeyPlaced())
-				{
-					// Suche im Inventar nach einem Item-Key, der in VariantMap liegt
-					for (int32 i = 0; i < itemList.Num(); ++i)
-					{
-						const FString& invItem = itemList[i];
-						if (lockActor->VariantMap.Contains(invItem))
-						{
-							TSubclassOf<ACollectableItem> actorClass = *lockActor->VariantMap.Find(invItem);
-							if (actorClass)
-							{
-								FActorSpawnParameters SpawnParams;
-								SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-
-								FVector SpawnLoc = lockActor->PlacementPoint->GetComponentLocation();
-								FRotator SpawnRot = lockActor->PlacementPoint->GetComponentRotation();
-
-								AActor* Spawned = GetWorld()->SpawnActor<AActor>(actorClass, SpawnLoc, SpawnRot, SpawnParams);
-								if (Spawned)
-								{
-									// lock merkt sich jetzt den originalen Item-Key (invItem)
-									lockActor->PlaceVariant(invItem, Spawned);
-
-									// entferne das Item aus dem Inventar
-									itemList.RemoveAt(i);
-								}
-							}
-							break; // wir haben etwas verwendet -> raus aus der Schleife
-						}
-					}
-				}
-				else
-				{
-					// Entferne die platzierte Variante und gib den Key zurück ins Inventar
-					FString returnedKey = lockActor->RemovePlacedVariant();
-					if (!returnedKey.IsEmpty())
-					{
-						itemList.Add(returnedKey);
-					}
-				}
-			}
-		}
-
-	}
-	else
+	if (!hasHit)
 	{
 		UE_LOG(LogTemp, Display, TEXT("No actor hit!"));
+		return;
+	}
+
+	AActor* hitActor = hitResult.GetActor();
+	if (!hitActor) return;
+
+	// Collact item if Actor is a CollectableItem
+	if (hitActor->ActorHasTag("CollectableItem"))
+	{
+		ACollectableItem* collectableItem = Cast<ACollectableItem>(hitActor);
+		if (collectableItem)
+		{
+			itemList.Add(collectableItem->itemName);
+			collectableItem->Destroy();
+		}
+	}
+	// check if Actor is a Lock
+	else if (hitActor->ActorHasTag("Lock"))
+	{
+		ALock* lockActor = Cast<ALock>(hitActor);
+		if (!lockActor) return;
+
+		// if Actor is a Lock and has no placed Actor -> try to place an Actor from inventory
+		if (!lockActor->GetIsKeyPlaced() && !lockActor->spawnedActor)
+		{
+			for (int32 i = 0; i < itemList.Num(); ++i)
+			{
+				const FString& invItem = itemList[i];
+
+				if (lockActor->variantMap.Contains(invItem))
+				{
+					TSubclassOf<ACollectableItem> actorClass = *lockActor->variantMap.Find(invItem);
+					if (!actorClass) continue;
+
+					FActorSpawnParameters SpawnParams;
+					SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+					FVector SpawnLoc = lockActor->placementPoint->GetComponentLocation();
+					FRotator SpawnRot = lockActor->placementPoint->GetComponentRotation();
+
+					AActor* Spawned = GetWorld()->SpawnActor<AActor>(actorClass, SpawnLoc, SpawnRot, SpawnParams);
+					if (!Spawned) continue;
+
+					// place Actor and ckeck if correct
+					lockActor->PlaceVariant(invItem, Spawned);
+
+					itemList.RemoveAt(i);
+
+					break; 
+				}
+			}
+		}
+		// if Actor is a Lock and has a placed Actor -> remove Actor and add to inventory
+		else if (lockActor->spawnedActor)
+		{
+			FString returnedKey = lockActor->RemovePlacedVariant();
+			if (!returnedKey.IsEmpty())
+			{
+				itemList.Add(returnedKey);
+			}
+		}
 	}
 }
 

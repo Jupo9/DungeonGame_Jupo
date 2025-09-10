@@ -27,13 +27,16 @@ public:
 	bool GetIsKeyPlaced();
 
 	UPROPERTY(EditAnywhere, Category = "Variants")
-	USceneComponent* PlacementPoint;
+	USceneComponent* placementPoint;
 
 	UPROPERTY(EditAnywhere, Category = "Variants")
-	TMap<FString, TSubclassOf<ACollectableItem>> VariantMap;
+	TMap<FString, TSubclassOf<ACollectableItem>> variantMap;
+
+	UPROPERTY(EditAnywhere, Category = "Variants")
+	TMap<FString, bool> correctKeyMap;
 
 	UPROPERTY()
-	AActor* SpawnedActor;
+	AActor* spawnedActor;
 
 	UPROPERTY(VisibleAnywhere)
 	USceneComponent* rootComp;
@@ -48,7 +51,7 @@ public:
 	FString RemovePlacedVariant();
 
 	UPROPERTY()
-	FString PlacedItemKey;
+	FString placedItemKey;
 
 private:
 

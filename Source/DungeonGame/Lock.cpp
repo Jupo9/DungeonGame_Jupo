@@ -18,14 +18,14 @@ ALock::ALock()
     triggerComp = CreateDefaultSubobject<UTriggerComponent>(TEXT("TriggerComponent"));
     triggerComp->SetupAttachment(rootComp);
 
-    PlacementPoint = CreateDefaultSubobject<USceneComponent>(TEXT("PlacementPoint"));
-    PlacementPoint->SetupAttachment(rootComp);
+    placementPoint = CreateDefaultSubobject<USceneComponent>(TEXT("PlacementPoint"));
+    placementPoint->SetupAttachment(rootComp);
 
     Tags.Add("Lock");
 
     isKeyPlaced = false;
-    SpawnedActor = nullptr;
-    PlacedItemKey.Empty();
+    spawnedActor = nullptr;
+    placedItemKey.Empty();
 }
 
 void ALock::BeginPlay()
@@ -58,22 +58,31 @@ bool ALock::GetIsKeyPlaced()
 
 void ALock::PlaceVariant(const FString& ItemKey, AActor* Spawned)
 {
-    PlacedItemKey = ItemKey;
-    SpawnedActor = Spawned;
-    SetIsKeyPlaced(true);
+    placedItemKey = ItemKey;
+    spawnedActor = Spawned;
+
+    if (correctKeyMap.Contains(ItemKey) && correctKeyMap[ItemKey])
+    {
+        SetIsKeyPlaced(true); 
+    }
+    else
+    {
+        SetIsKeyPlaced(false); 
+        UE_LOG(LogTemp, Warning, TEXT("Placed incorrect key variant on lock: %s"), *ItemKey);
+    }
 }
 
 FString ALock::RemovePlacedVariant()
 {
-    FString KeyToReturn = PlacedItemKey;
+    FString KeyToReturn = placedItemKey;
 
-    if (SpawnedActor)
+    if (spawnedActor)
     {
-        SpawnedActor->Destroy();
-        SpawnedActor = nullptr;
+        spawnedActor->Destroy();
+        spawnedActor = nullptr;
     }
 
-    PlacedItemKey.Empty();
+    placedItemKey.Empty();
     SetIsKeyPlaced(false);
 
     return KeyToReturn;

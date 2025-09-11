@@ -24,8 +24,11 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Mover|Movement")
 	FVector moveOffset;
+
+	UPROPERTY(EditAnywhere, Category = "Mover|Rotation")
+	FRotator rotateOffset;
 
 	UPROPERTY(EditAnywhere)
 	float moveTime = 4.f;
@@ -35,6 +38,9 @@ public:
 
 	UPROPERTY(VisibleAnywhere)
 	bool reachedTarget = false;
+
+	FRotator startRotation;
+	FRotator targetRotation;
 
 	FVector targetLocation;
 	FVector startLocation;

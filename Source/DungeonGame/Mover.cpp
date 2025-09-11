@@ -21,6 +21,7 @@ void UMover::BeginPlay()
 	Super::BeginPlay();
 
 	startLocation = GetOwner()->GetActorLocation();
+	startRotation = GetOwner()->GetActorRotation();
 	SetShouldMove(false);
 }
 
@@ -36,8 +37,9 @@ void UMover::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponent
 	*/
 
 	FVector currentLocation = GetOwner()->GetActorLocation();
+	FRotator currentRotation = GetOwner()->GetActorRotation();
 
-	reachedTarget = currentLocation.Equals(targetLocation);
+	reachedTarget = currentLocation.Equals(targetLocation) && currentRotation.Equals(targetRotation);;
 
 	if (!reachedTarget)
 	{
@@ -45,7 +47,11 @@ void UMover::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponent
 
 		FVector newLocation = FMath::VInterpConstantTo(currentLocation, targetLocation, DeltaTime, speed);
 
-		GetOwner()->SetActorLocation(newLocation);
+		float rotationSpeed = rotateOffset.Euler().Size() / moveTime;
+
+		FRotator newRotation = FMath::RInterpConstantTo(currentRotation, targetRotation, DeltaTime, rotationSpeed);
+
+		GetOwner()->SetActorLocationAndRotation(newLocation, newRotation);
 	}
 }
 
@@ -61,6 +67,7 @@ void UMover::SetShouldMove(bool newShouldMove)
 	if (shouldMove)
 	{
 		targetLocation = startLocation + moveOffset;
+		targetRotation = startRotation + rotateOffset;
 
 		if (shouldDestroy)
 		{
@@ -70,7 +77,7 @@ void UMover::SetShouldMove(bool newShouldMove)
 	else
 	{
 		targetLocation = startLocation;
-
+		targetRotation = startRotation;
 	}
 }
 

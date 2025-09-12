@@ -18,19 +18,19 @@ void ALookAtActor::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	if (!TargetActor)
+	if (!targetActor)
 	{
 		TArray<AActor*> FoundActors;
-		UGameplayStatics::GetAllActorsWithTag(GetWorld(), TargetTag, FoundActors);
+		UGameplayStatics::GetAllActorsWithTag(GetWorld(), targetTag, FoundActors);
 
 		if (FoundActors.Num() > 0)
 		{
-			TargetActor = FoundActors[0];
-			UE_LOG(LogTemp, Display, TEXT("%s will look at %s"), *GetName(), *TargetActor->GetName());
+			targetActor = FoundActors[0];
+			UE_LOG(LogTemp, Display, TEXT("%s will look at %s"), *GetName(), *targetActor->GetName());
 		}
 		else
 		{
-			UE_LOG(LogTemp, Warning, TEXT("%s could not find any Actor with tag '%s'"), *GetName(), *TargetTag.ToString());
+			UE_LOG(LogTemp, Warning, TEXT("%s could not find any Actor with tag '%s'"), *GetName(), *targetTag.ToString());
 		}
 	}
 }
@@ -41,23 +41,16 @@ void ALookAtActor::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 
-	if (TargetActor)
+	if (targetActor)
 	{
-		// Aktuelle Position des Actors
-		FVector EyeLocation = GetActorLocation();
+		FVector eyeLocation = GetActorLocation();
+		FVector targetLocation = targetActor->GetActorLocation();
 
-		// Position des Ziel-Actors
-		FVector TargetLocation = TargetActor->GetActorLocation();
+		FRotator lookAtRotation = UKismetMathLibrary::FindLookAtRotation(eyeLocation, targetLocation);
+		FRotator currentRotation = GetActorRotation();
+		FRotator newRotation = FMath::RInterpConstantTo(currentRotation, lookAtRotation, DeltaTime, rotationSpeed);
 
-		// Rotation berechnen, die X-Achse auf Target zeigt
-		FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(EyeLocation, TargetLocation);
-
-		// Sanfte Rotation: Interpolieren zwischen aktueller Rotation und Zielrotation
-		FRotator CurrentRotation = GetActorRotation();
-		FRotator NewRotation = FMath::RInterpConstantTo(CurrentRotation, LookAtRotation, DeltaTime, RotationSpeed);
-
-		// Neue Rotation setzen
-		SetActorRotation(NewRotation);
+		SetActorRotation(newRotation);
 	}
 }
 

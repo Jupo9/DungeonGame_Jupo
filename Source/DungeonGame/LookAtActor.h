@@ -24,14 +24,12 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	UPROPERTY(EditAnywhere, Category = "LookAt")
-	AActor* TargetActor;
+	AActor* targetActor;
 
-	// Rotationsgeschwindigkeit in Grad pro Sekunde
 	UPROPERTY(EditAnywhere, Category = "LookAt")
-	float RotationSpeed = 90.f;
+	float rotationSpeed = 90.f;
 
-	// Tag, nach dem gesucht wird, falls TargetActor leer ist
 	UPROPERTY(EditAnywhere, Category = "LookAt")
-	FName TargetTag = "Player";
+	FName targetTag = "Player";
 
 };
